@@ -1,25 +1,27 @@
 import requests
 from bs4 import BeautifulSoup
+import pandas as pd
 import streamlit as st
 
-st.set_page_config(page_title="社福牙醫診所測試", layout="centered")
-st.title("社福牙醫診所資料擷取")
+st.set_page_config(page_title="社福牙醫診所資料擷取", layout="wide")
+st.title("社福牙醫診所名單 - 多表格分析")
 
-# Step 1: 請求網站資料
 url = "https://www.hkcss.org.hk/ngo-se-dental-clinic-list/"
 headers = {"User-Agent": "Mozilla/5.0"}
 res = requests.get(url, headers=headers)
 res.encoding = "utf-8"
 
-# Step 2: 顯示 HTML 原始碼
-st.subheader("網站 HTML 原始碼預覽")
-st.code(res.text[:3000], language="html")  # 避免整頁太長
-
-# Step 3: 嘗試顯示 table 數量
 soup = BeautifulSoup(res.text, "html.parser")
 tables = soup.find_all("table")
 
-if tables:
-    st.success(f"發現 {len(tables)} 個 <table> 元素")
-else:
-    st.warning("此網站似乎無 <table> 結構，可能是 JavaScript 動態載入")
+st.success(f"共發現 {len(tables)} 個 <table> 元素")
+
+# 顯示每個表格的前幾行
+for idx, table in enumerate(tables):
+    st.markdown(f"### 表格 #{idx+1}")
+    try:
+        df = pd.read_html(str(table))[0]
+        st.dataframe(df.head(5), use_container_width=True)
+    except Exception as e:
+        st.warning(f"第 {idx+1} 個表格讀取失敗")
+        st.exception(e)
