@@ -26,7 +26,7 @@ def get_all_clinic_tables():
 
     full_df = pd.concat(all_df, ignore_index=True)
     full_df = full_df.rename(columns=lambda x: str(x).strip())  # 清洗欄位名稱
-    full_df = full_df.dropna(subset=["診所名稱"], errors="ignore")
+    full_df = full_df.dropna(subset=["診所名稱"])
     return full_df
 
 # Streamlit UI 預覽
