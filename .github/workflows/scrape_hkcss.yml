@@ -4,7 +4,7 @@ on:
   schedule:
     # 每天凌晨2點執行
     - cron: "0 2 * * *"
-  workflow_dispatch: # 允許手動觸發
+  workflow_dispatch:  # 允許手動觸發此工作流
 
 jobs:
   scrape_data:
@@ -36,4 +36,3 @@ jobs:
         git push
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
