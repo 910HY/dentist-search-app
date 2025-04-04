@@ -1,14 +1,14 @@
-name: 自动爬取社福牙醫診所資料
+name: 自動擷取社福牙醫診所資料
 
 on:
   schedule:
-    # 每天凌晨2點執行
-    - cron: "0 2 * * *"
-  workflow_dispatch:  # 允許手動觸發此工作流
+    - cron: "0 2 * * *"  # 每日凌晨 2 點執行
+  workflow_dispatch:      # 允許手動觸發
 
 jobs:
   scrape_data:
     runs-on: ubuntu-latest
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
@@ -32,7 +32,5 @@ jobs:
         git config --global user.name "github-actions"
         git config --global user.email "github-actions@github.com"
         git add data/hkcss_clinics.csv
-        git commit -m "Update hkcss_clinics.csv with latest data"
-        git push
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        git diff --cached --quiet || git commit -m "Update hkcss_clinics.csv with latest data"
+        git push https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
