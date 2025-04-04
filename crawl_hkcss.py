@@ -1,38 +1,25 @@
 import requests
 from bs4 import BeautifulSoup
-import pandas as pd
 import streamlit as st
 
-def crawl_hkcss():
-    url = "https://www.hkcss.org.hk/ngo-se-dental-clinic-list/"
-    headers = {"User-Agent": "Mozilla/5.0"}
-    res = requests.get(url, headers=headers)
-    res.encoding = "utf-8"
+st.set_page_config(page_title="社福牙醫診所測試", layout="centered")
+st.title("社福牙醫診所資料擷取")
 
-    soup = BeautifulSoup(res.text, "html.parser")
+# Step 1: 請求網站資料
+url = "https://www.hkcss.org.hk/ngo-se-dental-clinic-list/"
+headers = {"User-Agent": "Mozilla/5.0"}
+res = requests.get(url, headers=headers)
+res.encoding = "utf-8"
 
-    # 嘗試找 HTML 表格
-    table = soup.find("table")
-    rows = table.find_all("tr")
+# Step 2: 顯示 HTML 原始碼
+st.subheader("網站 HTML 原始碼預覽")
+st.code(res.text[:3000], language="html")  # 避免整頁太長
 
-    data = []
-    headers = [th.text.strip() for th in rows[0].find_all("th")]
+# Step 3: 嘗試顯示 table 數量
+soup = BeautifulSoup(res.text, "html.parser")
+tables = soup.find_all("table")
 
-    for row in rows[1:]:
-        cols = [td.text.strip() for td in row.find_all("td")]
-        if len(cols) == len(headers):
-            data.append(dict(zip(headers, cols)))
-
-    return pd.DataFrame(data)
-
-# Streamlit UI
-st.set_page_config(page_title="香港牙醫搜尋平台", layout="centered")
-st.title("社福牙醫診所清單")
-
-try:
-    df = crawl_hkcss()
-    st.success(f"成功擷取 {len(df)} 筆資料。")
-    st.dataframe(df, use_container_width=True)
-except Exception as e:
-    st.error("未能成功擷取資料。")
-    st.exception(e)
+if tables:
+    st.success(f"發現 {len(tables)} 個 <table> 元素")
+else:
+    st.warning("此網站似乎無 <table> 結構，可能是 JavaScript 動態載入")
