@@ -1,14 +1,11 @@
-name: 自動擷取社福牙醫診所資料
+name: 自動擷取牙醫診所資料
 
 on:
-  schedule:
-    - cron: "0 2 * * *"  # 每日凌晨 2 點執行
-  workflow_dispatch:      # 允許手動觸發
+  workflow_dispatch:
 
 jobs:
   scrape_data:
     runs-on: ubuntu-latest
-
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
@@ -20,14 +17,12 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Run the scraping script
-      run: |
-        python crawl_hkcss.py
+    - name: Run crawler
+      run: python crawl_hkcss.py
 
-    - name: Commit and push updated data
+    - name: Git push using PAT
       run: |
         git config --global user.name "github-actions"
         git config --global user.email "github-actions@github.com"
