@@ -1,4 +1,4 @@
-# 主網站：dentist_web_crawler_ui.py
+# 主網站：dentist_web_crawler_ui.py（更新版本）
 import streamlit as st
 import pandas as pd
 import os
@@ -16,16 +16,14 @@ region_options = {
     "新界": ["荃灣", "屯門", "元朗", "北區", "大埔", "西貢", "沙田", "葵青", "離島"]
 }
 
-flat_regions = [(area, main) for main, sublist in region_options.items() for area in sublist]
-
-# 搜尋欄
+# 搜尋欄位
 st.markdown("""
 <div style='border: 2px solid orange; padding: 20px; border-radius: 12px;'>
 """, unsafe_allow_html=True)
 
 col1, col2 = st.columns([2, 1])
 with col1:
-    search_name = st.text_input("診所名稱 / 關鍵字", placeholder="例如：彩雲、仁愛")
+    search_name = st.text_input("診所名稱 / 地址關鍵字 (可選)", placeholder="例如：彩雲、仁愛")
 with col2:
     region_group = st.selectbox("選擇主要區域", list(region_options.keys()))
     subregion = st.selectbox("選擇地區", region_options[region_group])
@@ -37,11 +35,12 @@ if not os.path.exists(DATA_FILE):
     st.error("未能找到診所資料，請先執行 crawl_hkcss.py 擷取資料")
 else:
     df = pd.read_csv(DATA_FILE)
+    df = df.fillna("")  # 填補空白避免 contains 出錯
 
-    # 初步過濾（先以地區分類）
+    # 地區過濾（強制有）
     filtered_df = df[df["地區"].str.contains(subregion, case=False, na=False)]
 
-    # 如有輸入關鍵字，再以診所名稱／地址進一步過濾
+    # 如有關鍵字則進一步搜尋診所名稱或地址
     if search_name:
         filtered_df = filtered_df[
             filtered_df["診所名稱"].str.contains(search_name, case=False, na=False) |
