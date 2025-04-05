@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
+from io import StringIO
 import os
 
 DATA_PATH = "data"
@@ -19,17 +20,19 @@ def get_all_clinic_tables():
     all_df = []
     for table in tables:
         try:
-            df = pd.read_html(str(table))[0]
-            if df.iloc[0].astype(str).str.contains("診所名稱", na=False).any():
-                df.columns = df.iloc[0]
-                df = df[1:]
-            df = df.dropna(subset=["診所名稱"], errors='ignore')
+            df = pd.read_html(StringIO(str(table)))[0]
+            df.columns = df.iloc[0]
+            df = df[1:]
+            df = df.dropna(subset=["診所名稱"], errors="ignore")
             df = df.rename(columns=lambda x: str(x).strip())
             df = df.fillna("")
             df["診所類型"] = "社福牙醫診所"
             all_df.append(df)
         except Exception as e:
             continue
+
+    if not all_df:
+        raise ValueError("未能擷取任何診所資料，可能網站結構已改變")
 
     full_df = pd.concat(all_df, ignore_index=True)
     return full_df
