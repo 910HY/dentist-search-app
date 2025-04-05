@@ -1,4 +1,4 @@
-# 主網站：dentist_web_crawler_ui.py（更新版本）
+# 主網站：dentist_web_crawler_ui.py（修正版本）
 import streamlit as st
 import pandas as pd
 import os
@@ -35,12 +35,12 @@ if not os.path.exists(DATA_FILE):
     st.error("未能找到診所資料，請先執行 crawl_hkcss.py 擷取資料")
 else:
     df = pd.read_csv(DATA_FILE)
-    df = df.fillna("")  # 填補空白避免 contains 出錯
+    df = df.fillna("")  # 避免空值造成錯誤
 
-    # 地區過濾（強制有）
+    # 地區過濾（必選）
     filtered_df = df[df["地區"].str.contains(subregion, case=False, na=False)]
 
-    # 如有關鍵字則進一步搜尋診所名稱或地址
+    # 如有關鍵字則進一步過濾診所名稱、地址
     if search_name:
         filtered_df = filtered_df[
             filtered_df["診所名稱"].str.contains(search_name, case=False, na=False) |
@@ -54,9 +54,10 @@ else:
             st.markdown(f"""
                 <div style='border: 1px solid #ddd; padding: 16px; margin-bottom: 12px; border-radius: 10px;'>
                     <h4 style='margin-bottom: 4px;'>{row['診所名稱']}</h4>
+                    <p style='margin: 0;'><strong>診所類型：</strong>{row.get('診所類型', '未分類')}</p>
                     <p style='margin: 0;'><strong>地區：</strong>{row['地區']}</p>
                     <p style='margin: 0;'><strong>地址：</strong>{row['地址']}</p>
                     <p style='margin: 0;'><strong>聯絡電話：</strong>{row['聯絡電話']}</p>
-                    <p style='margin: 0;'><strong>營業時間：</strong>{row['營業時間']}</p>
+                    <p style='margin: 0;'><strong>營業時間：</strong>{row['營業時間'].replace('  ', '<br>')}</p>
                 </div>
             """, unsafe_allow_html=True)
