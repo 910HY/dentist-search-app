@@ -1,16 +1,19 @@
 name: 自動擷取牙醫診所資料
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:   # 手動執行
+  schedule:
+    - cron: '0 2 * * *'  # 每日凌晨 2 點自動運行
 
 jobs:
   scrape_data:
     runs-on: ubuntu-latest
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
       with:
-        persist-credentials: false  # <-- 關鍵！
+        persist-credentials: false  # 避免覆蓋 PAT
 
     - name: Set up Python
       uses: actions/setup-python@v2
@@ -19,15 +22,17 @@ jobs:
 
     - name: Install dependencies
       run: |
+        pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Run crawler
+    - name: Run the scraping script
       run: python crawl_hkcss.py
 
-    - name: Git push using PAT
+    - name: Commit and push updated data
       run: |
         git config --global user.name "github-actions"
         git config --global user.email "github-actions@github.com"
+        git pull https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main --rebase
         git add data/hkcss_clinics.csv
         git diff --cached --quiet || git commit -m "Update hkcss_clinics.csv with latest data"
         git push https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
