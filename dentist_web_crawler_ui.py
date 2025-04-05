@@ -1,47 +1,51 @@
-import requests
-from bs4 import BeautifulSoup
-import pandas as pd
+# 主網站：dentist_web_crawler_ui.py
 import streamlit as st
+import pandas as pd
+import os
 
-# 目標網站（模擬示例，可替換成實際牙醫網站）
-BASE_URL = "https://www.finddoc.com/doctors/%E7%89%99%E9%86%AB/hong-kong?page="
+DATA_FILE = "data/hkcss_clinics.csv"
 
-def crawl_finddoc(max_pages=2):
-    data = []
-    for page in range(1, max_pages + 1):
-        url = BASE_URL + str(page)
-        res = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
-        soup = BeautifulSoup(res.text, "html.parser")
-
-        listings = soup.select(".doctors-list .item")
-        for item in listings:
-            name = item.select_one(".doc-name").text.strip() if item.select_one(".doc-name") else ""
-            clinic = item.select_one(".clinic-name").text.strip() if item.select_one(".clinic-name") else ""
-            address = item.select_one(".address").text.strip() if item.select_one(".address") else ""
-            phone = item.select_one(".phone").text.strip() if item.select_one(".phone") else ""
-            data.append({
-                "牙醫姓名": name,
-                "診所名稱": clinic,
-                "地址": address,
-                "電話": phone
-            })
-    return pd.DataFrame(data)
-
-# Streamlit 介面設定
-st.set_page_config(page_title="香港牙醫資訊平台", layout="wide")
+st.set_page_config(page_title="香港牙醫搜尋平台", layout="centered")
 st.title("香港牙醫搜尋平台")
+st.markdown("<p style='color:gray;'>搜尋及比較香港社福牙醫診所</p>", unsafe_allow_html=True)
 
-# 抓取資料
-with st.spinner("正在載入牙醫資料..."):
-    df = crawl_finddoc(max_pages=3)
+# 地區選項劃分（港島、九龍、新界 + 細分）
+region_options = {
+    "港島": ["中西區", "灣仔", "東區", "南區"],
+    "九龍": ["油尖旺", "深水埗", "九龍城", "黃大仙", "觀塘"],
+    "新界": ["荃灣", "屯門", "元朗", "北區", "大埔", "西貢", "沙田", "葵青", "離島"]
+}
 
-# 搜尋欄位
-search_name = st.text_input("輸入牙醫或診所名稱：")
-search_district = st.text_input("輸入地址關鍵字（例如：中環、旺角）：")
+flat_regions = [(area, main) for main, sublist in region_options.items() for area in sublist]
 
-# 資料過濾
-filtered_df = df[df["牙醫姓名"].str.contains(search_name, case=False, na=False)]
-filtered_df = filtered_df[filtered_df["地址"].str.contains(search_district, case=False, na=False)]
+# 搜尋欄
+st.markdown("""
+<div style='border: 2px solid orange; padding: 20px; border-radius: 12px;'>
+""", unsafe_allow_html=True)
 
-st.write(f"共找到 {len(filtered_df)} 筆資料：")
-st.dataframe(filtered_df, use_container_width=True)
+col1, col2 = st.columns([2, 1])
+with col1:
+    search_name = st.text_input("診所名稱 / 關鍵字", placeholder="例如：彩雲、仁愛")
+with col2:
+    region_group = st.selectbox("選擇主要區域", list(region_options.keys()))
+    subregion = st.selectbox("選擇地區", region_options[region_group])
+
+st.markdown("""</div>""", unsafe_allow_html=True)
+
+# 載入資料
+if not os.path.exists(DATA_FILE):
+    st.error("未能找到診所資料，請先執行 crawl_hkcss.py 擷取資料")
+else:
+    df = pd.read_csv(DATA_FILE)
+
+    # 搜尋條件
+    filtered_df = df[
+        df["診所名稱"].str.contains(search_name, case=False, na=False) |
+        df["地址"].str.contains(search_name, case=False, na=False)
+    ]
+    filtered_df = filtered_df[
+        filtered_df["地區"].str.contains(subregion, case=False, na=False)
+    ]
+
+    st.write(f"共找到 {len(filtered_df)} 筆結果：")
+    st.dataframe(filtered_df, use_container_width=True)
