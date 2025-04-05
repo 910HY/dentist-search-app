@@ -1,4 +1,4 @@
-import requests
+import cloudscraper
 from bs4 import BeautifulSoup
 import pandas as pd
 from io import StringIO
@@ -10,8 +10,8 @@ DATA_FILE = os.path.join(DATA_PATH, "hkcss_clinics.csv")
 
 def get_all_clinic_tables():
     url = "https://www.hkcss.org.hk/ngo-se-dental-clinic-list/"
-    headers = {"User-Agent": "Mozilla/5.0"}
-    res = requests.get(url, headers=headers)
+    scraper = cloudscraper.create_scraper()  # 模擬瀏覽器防止被擋
+    res = scraper.get(url)
     res.encoding = "utf-8"
 
     soup = BeautifulSoup(res.text, "html.parser")
@@ -32,7 +32,7 @@ def get_all_clinic_tables():
             continue
 
     if not all_df:
-        raise ValueError("未能擷取任何診所資料，可能網站結構已改變")
+        raise ValueError("未能擷取任何診所資料，可能網站結構已改變或被擋")
 
     full_df = pd.concat(all_df, ignore_index=True)
     return full_df
