@@ -38,14 +38,26 @@ if not os.path.exists(DATA_FILE):
 else:
     df = pd.read_csv(DATA_FILE)
 
-    # 搜尋條件
-    filtered_df = df[
-        df["診所名稱"].str.contains(search_name, case=False, na=False) |
-        df["地址"].str.contains(search_name, case=False, na=False)
-    ]
-    filtered_df = filtered_df[
-        filtered_df["地區"].str.contains(subregion, case=False, na=False)
-    ]
+    # 初步過濾（先以地區分類）
+    filtered_df = df[df["地區"].str.contains(subregion, case=False, na=False)]
+
+    # 如有輸入關鍵字，再以診所名稱／地址進一步過濾
+    if search_name:
+        filtered_df = filtered_df[
+            filtered_df["診所名稱"].str.contains(search_name, case=False, na=False) |
+            filtered_df["地址"].str.contains(search_name, case=False, na=False)
+        ]
 
     st.write(f"共找到 {len(filtered_df)} 筆結果：")
-    st.dataframe(filtered_df, use_container_width=True)
+
+    for idx, row in filtered_df.iterrows():
+        with st.container():
+            st.markdown(f"""
+                <div style='border: 1px solid #ddd; padding: 16px; margin-bottom: 12px; border-radius: 10px;'>
+                    <h4 style='margin-bottom: 4px;'>{row['診所名稱']}</h4>
+                    <p style='margin: 0;'><strong>地區：</strong>{row['地區']}</p>
+                    <p style='margin: 0;'><strong>地址：</strong>{row['地址']}</p>
+                    <p style='margin: 0;'><strong>聯絡電話：</strong>{row['聯絡電話']}</p>
+                    <p style='margin: 0;'><strong>營業時間：</strong>{row['營業時間']}</p>
+                </div>
+            """, unsafe_allow_html=True)
